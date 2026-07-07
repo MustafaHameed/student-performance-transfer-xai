@@ -1,0 +1,40 @@
+# Core Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+pytorch-tabnet>=4.1.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+
+# UCI Dataset
+ucimlrepo>=0.0.3
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Explainability
+shap>=0.42.0
+dice-ml>=0.11
+
+# Domain Adaptation / Transfer Learning
+adapt>=0.4.0
+
+# Gradient Boosting
+xgboost>=2.0.0
+lightgbm>=4.0.0
+catboost>=1.2.0
+
+# Hyperparameter Tuning
+optuna>=3.3.0
+
+# Word Document Generation
+python-docx>=0.8.11
+
+# Additional Utilities
+tqdm>=4.65.0
+joblib>=1.3.0

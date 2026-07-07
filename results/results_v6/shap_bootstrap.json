@@ -1,0 +1,35 @@
+{
+  "concept_features": [
+    "is_male",
+    "high_absence",
+    "family_engagement",
+    "engagement_score",
+    "higher_ed_intent",
+    "prior_failure_risk",
+    "parental_education",
+    "romantic_or_distraction"
+  ],
+  "pairs": {
+    "Por_vs_Math": {
+      "observed_rho": 0.5952380952380953,
+      "bootstrap_mean": 0.6185619047619049,
+      "bootstrap_ci95_lo": 0.5000000000000001,
+      "bootstrap_ci95_hi": 0.7142857142857144,
+      "n_bootstrap": 5000
+    },
+    "Por_vs_xAPI": {
+      "observed_rho": -0.11904761904761905,
+      "bootstrap_mean": -0.11402857142857145,
+      "bootstrap_ci95_lo": -0.11904761904761905,
+      "bootstrap_ci95_hi": -0.07142857142857144,
+      "n_bootstrap": 5000
+    },
+    "Math_vs_xAPI": {
+      "observed_rho": 0.2380952380952381,
+      "bootstrap_mean": 0.29687619047619046,
+      "bootstrap_ci95_lo": 0.14285714285714288,
+      "bootstrap_ci95_hi": 0.4761904761904762,
+      "n_bootstrap": 5000
+    }
+  }
+}

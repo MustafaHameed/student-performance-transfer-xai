@@ -1,0 +1,61 @@
+{
+  "methods": [
+    "target_only",
+    "pooled",
+    "warm_start",
+    "tradaboost_r2",
+    "coral",
+    "gated"
+  ],
+  "matrix": [
+    [
+      0.0,
+      -1.0,
+      -1.0,
+      0.84,
+      -0.88,
+      -1.0
+    ],
+    [
+      1.0,
+      0.0,
+      -0.28,
+      0.92,
+      0.72,
+      -0.28
+    ],
+    [
+      1.0,
+      0.28,
+      0.0,
+      0.96,
+      0.8,
+      0.0
+    ],
+    [
+      -0.84,
+      -0.92,
+      -0.96,
+      0.0,
+      -0.88,
+      -0.96
+    ],
+    [
+      0.88,
+      -0.72,
+      -0.8,
+      0.88,
+      0.0,
+      -0.8
+    ],
+    [
+      1.0,
+      0.28,
+      0.0,
+      0.96,
+      0.8,
+      0.0
+    ]
+  ],
+  "interpretation": "Entry (i,j) is Cliff's delta for method_i vs method_j on per-fold RMSE; positive means method_i has lower RMSE on a majority of paired folds. |delta|<=0.147 negligible; <=0.33 small; <=0.474 medium; >0.474 large (Romano et al. 2006)."
+}
