@@ -1,0 +1,47 @@
+{
+  "Portuguese": {
+    "n": 649,
+    "n_at_risk": 100,
+    "at_risk_pct": 15.408320493066254,
+    "cohens_d": {
+      "is_male": 0.21699540864775685,
+      "high_absence": 0.2654916068046551,
+      "family_eng": -0.1352175753846213,
+      "engagement": -0.46298381000249433,
+      "higher_intent": -0.9008174511252035,
+      "failure_risk": 1.136981133078489,
+      "par_education": -0.44920410627484797,
+      "distraction": 0.22524531133524592
+    }
+  },
+  "Mathematics": {
+    "n": 395,
+    "n_at_risk": 130,
+    "at_risk_pct": 32.91139240506329,
+    "cohens_d": {
+      "is_male": -0.15027933507077293,
+      "high_absence": 0.16615726062885777,
+      "family_eng": 0.2146324197301445,
+      "engagement": -0.15882693897106426,
+      "higher_intent": -0.33901744616509155,
+      "failure_risk": 0.761675447451761,
+      "par_education": -0.2653137578466564,
+      "distraction": 0.20846911120738218
+    }
+  },
+  "xAPI-Edu": {
+    "n": 480,
+    "n_at_risk": 127,
+    "at_risk_pct": 26.458333333333332,
+    "cohens_d": {
+      "is_male": 0.507376807645002,
+      "high_absence": 1.8433388673262414,
+      "family_eng": -1.0618800523756409,
+      "engagement": -1.9488742458234118,
+      "higher_intent": -0.030881115808853,
+      "failure_risk": 0.7948177714220747,
+      "par_education": -1.0275406906443965,
+      "distraction": 0.635517690825097
+    }
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "domains": [
+    "Portuguese",
+    "Math",
+    "xAPI"
+  ],
+  "feature_importance": {
+    "Portuguese": {
+      "is_male": 0.17807471581056344,
+      "high_absence": 0.04942211338414811,
+      "family_engagement": 0.19873539787926447,
+      "engagement_score": 0.5001676000354631,
+      "higher_ed_intent": 0.2965461821135881,
+      "prior_failure_risk": 0.5330330839765882,
+      "parental_education": 0.3888444641147919,
+      "romantic_or_distraction": 0.11787076255077783
+    },
+    "Math": {
+      "is_male": 0.32054871712160576,
+      "high_absence": 0.19475301003184012,
+      "family_engagement": 0.28070025044752805,
+      "engagement_score": 0.31860021815282924,
+      "higher_ed_intent": 0.09674442963603203,
+      "prior_failure_risk": 0.6622906536789712,
+      "parental_education": 0.33174171019318605,
+      "romantic_or_distraction": 0.17306410711626763
+    },
+    "xAPI": {
+      "is_male": 0.43166291864348244,
+      "high_absence": 1.925742825856278,
+      "family_engagement": 0.33747786530987706,
+      "engagement_score": 1.5816742639875252,
+      "higher_ed_intent": 0.0366726259425562,
+      "prior_failure_risk": 0.6899888816026015,
+      "parental_education": 0.30201150669461974,
+      "romantic_or_distraction": 0.37476286532098835
+    }
+  },
+  "spearman_matrix": [
+    [
+      1.0,
+      0.5952380952380953,
+      -0.11904761904761905
+    ],
+    [
+      0.5952380952380953,
+      1.0,
+      0.2380952380952381
+    ],
+    [
+      -0.11904761904761905,
+      0.2380952380952381,
+      1.0
+    ]
+  ],
+  "spearman_p_matrix": [
+    [
+      0.0,
+      0.13229166666666667,
+      0.7930059523809524
+    ],
+    [
+      0.13229166666666667,
+      0.0,
+      0.5821428571428572
+    ],
+    [
+      0.7930059523809524,
+      0.5821428571428572,
+      0.0
+    ]
+  ],
+  "spearman_p_one_sided_matrix": [
+    [
+      0.0,
+      0.06614583333333333,
+      0.623983134920635
+    ],
+    [
+      0.06614583333333333,
+      0.0,
+      0.2910714285714286
+    ],
+    [
+      0.623983134920635,
+      0.2910714285714286,
+      0.0
+    ]
+  ],
+  "p_test": "exact permutation (all n! orderings)",
+  "matrix_labels": [
+    "Portuguese",
+    "Math",
+    "xAPI"
+  ],
+  "per_feature_rank_std": {
+    "is_male": 1.247219128924647,
+    "high_absence": 2.943920288775949,
+    "family_engagement": 0.4714045207910317,
+    "engagement_score": 0.9428090415820634,
+    "higher_ed_intent": 1.8856180831641267,
+    "prior_failure_risk": 0.9428090415820634,
+    "parental_education": 2.160246899469287,
+    "romantic_or_distraction": 0.9428090415820634
+  },
+  "bootstrap": {
+    "Por_vs_Math": {
+      "observed_rho": 0.5952380952380953,
+      "bootstrap_mean": 0.6185619047619049,
+      "bootstrap_ci95_lo": 0.5000000000000001,
+      "bootstrap_ci95_hi": 0.7142857142857144,
+      "n_bootstrap": 5000
+    },
+    "Por_vs_xAPI": {
+      "observed_rho": -0.11904761904761905,
+      "bootstrap_mean": -0.11402857142857145,
+      "bootstrap_ci95_lo": -0.11904761904761905,
+      "bootstrap_ci95_hi": -0.07142857142857144,
+      "n_bootstrap": 5000
+    },
+    "Math_vs_xAPI": {
+      "observed_rho": 0.2380952380952381,
+      "bootstrap_mean": 0.29687619047619046,
+      "bootstrap_ci95_lo": 0.14285714285714288,
+      "bootstrap_ci95_hi": 0.4761904761904762,
+      "n_bootstrap": 5000
+    }
+  },
+  "n_orderings": 40320,
+  "min_p_two_sided": 4.96031746031746e-05,
+  "min_p_one_sided": 2.48015873015873e-05,
+  "critical_abs_rho_alpha05": 0.7380952381,
+  "abs_rho_95th_percentile_of_null": 0.7142857142857143
+}

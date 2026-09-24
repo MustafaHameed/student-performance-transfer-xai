@@ -1,0 +1,186 @@
+{
+  "n_predicted_at_risk_in_sample": 116,
+  "n_sampled": 80,
+  "archived_cover_idx_subset_of_rebuilt_sample": true,
+  "n_covered": 66,
+  "n_uncovered": 14,
+  "uncovered_idx": [
+    18,
+    25,
+    44,
+    130,
+    137,
+    144,
+    146,
+    150,
+    153,
+    160,
+    161,
+    170,
+    343,
+    389
+  ],
+  "covered_profile": {
+    "n": 66,
+    "failures_mean": 0.5151515151515151,
+    "share_with_prior_failure": 0.3484848484848485,
+    "absences_mean": 8.333333333333334,
+    "absences_median": 2.5,
+    "studytime_mean": 1.9848484848484849,
+    "goout_mean": 3.6666666666666665,
+    "Walc_mean": 2.393939393939394,
+    "higher_no_share": 0.09090909090909091,
+    "age_mean": 17.0,
+    "predicted_risk_mean": 0.7640510653387058,
+    "actual_at_risk_share": 0.9848484848484849,
+    "already_at_floor_share": 0.030303030303030304
+  },
+  "uncovered_profile": {
+    "n": 14,
+    "failures_mean": 2.142857142857143,
+    "share_with_prior_failure": 1.0,
+    "absences_mean": 3.5714285714285716,
+    "absences_median": 0.0,
+    "studytime_mean": 1.5,
+    "goout_mean": 3.0714285714285716,
+    "Walc_mean": 2.4285714285714284,
+    "higher_no_share": 0.21428571428571427,
+    "age_mean": 16.571428571428573,
+    "predicted_risk_mean": 0.9198858601811023,
+    "actual_at_risk_share": 1.0,
+    "already_at_floor_share": 0.0
+  },
+  "note": "The archived run did not log why a student got no counterfactual (DiCE returned none, an exception, or the 30 s per-student timeout); only the profiles are compared.",
+  "silhouette_recomputed": {
+    "2": 0.34615074642782256,
+    "3": 0.2568892571420843,
+    "4": 0.22307179325462956,
+    "5": 0.15746064598511098
+  },
+  "k3_clusters": [
+    {
+      "n": 52,
+      "top_mean_deltas": [
+        [
+          "absences",
+          -4.288461538461538
+        ],
+        [
+          "goout",
+          -1.6153846153846154
+        ],
+        [
+          "studytime",
+          0.5384615384615384
+        ]
+      ],
+      "from_k2_archetype": {
+        "1": 48,
+        "0": 4
+      }
+    },
+    {
+      "n": 8,
+      "top_mean_deltas": [
+        [
+          "absences",
+          -4.875
+        ],
+        [
+          "goout",
+          -1.5
+        ],
+        [
+          "internet_changed",
+          1.0
+        ]
+      ],
+      "from_k2_archetype": {
+        "1": 7,
+        "0": 1
+      }
+    },
+    {
+      "n": 6,
+      "top_mean_deltas": [
+        [
+          "goout",
+          -1.5
+        ],
+        [
+          "paid_changed",
+          1.0
+        ],
+        [
+          "studytime",
+          0.8333333333333334
+        ]
+      ],
+      "from_k2_archetype": {
+        "1": 5,
+        "0": 1
+      }
+    }
+  ],
+  "worked_example": {
+    "orig_idx": 100,
+    "features": {
+      "sex": "M",
+      "age": 16,
+      "absences": 14,
+      "goout": 5,
+      "studytime": 1,
+      "freetime": 5,
+      "Walc": 5,
+      "Dalc": 5,
+      "failures": 0,
+      "Medu": 4,
+      "Fedu": 4,
+      "higher": "yes",
+      "G3": 5
+    },
+    "predicted_risk_probability": 0.8155535615666588,
+    "counterfactual_changes": {
+      "goout": -2.0,
+      "absences": -7.0
+    },
+    "sparsity": 2
+  },
+  "per_seed_uncovered": {
+    "0": {
+      "n_uncovered": 16,
+      "uncovered_share_with_prior_failure": 1.0,
+      "covered_share_with_prior_failure": 0.328125,
+      "uncovered_absences_median": 0.0,
+      "uncovered_in_archived_uncovered": 14
+    },
+    "42": {
+      "n_uncovered": 18,
+      "uncovered_share_with_prior_failure": 1.0,
+      "covered_share_with_prior_failure": 0.3064516129032258,
+      "uncovered_absences_median": 0.0,
+      "uncovered_in_archived_uncovered": 14
+    },
+    "123": {
+      "n_uncovered": 18,
+      "uncovered_share_with_prior_failure": 1.0,
+      "covered_share_with_prior_failure": 0.3064516129032258,
+      "uncovered_absences_median": 0.0,
+      "uncovered_in_archived_uncovered": 14
+    },
+    "2024": {
+      "n_uncovered": 16,
+      "uncovered_share_with_prior_failure": 1.0,
+      "covered_share_with_prior_failure": 0.328125,
+      "uncovered_absences_median": 0.0,
+      "uncovered_in_archived_uncovered": 14
+    },
+    "2025": {
+      "n_uncovered": 18,
+      "uncovered_share_with_prior_failure": 1.0,
+      "covered_share_with_prior_failure": 0.3064516129032258,
+      "uncovered_absences_median": 0.0,
+      "uncovered_in_archived_uncovered": 14
+    }
+  }
+}

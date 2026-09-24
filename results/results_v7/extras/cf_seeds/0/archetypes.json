@@ -1,0 +1,60 @@
+{
+  "metrics": {
+    "n_at_risk": 80,
+    "n_with_cf": 64,
+    "coverage": 0.8,
+    "validity": 0.8,
+    "mean_sparsity": 2.234375,
+    "mean_proximity": 1.4859375,
+    "n_timeouts": 0
+  },
+  "archetypes": [
+    {
+      "cluster_id": 1,
+      "name": "Attendance-focused",
+      "n_students": 51,
+      "dominant_features": [
+        [
+          "absences",
+          -5.549019607843137
+        ],
+        [
+          "goout",
+          -1.6274509803921569
+        ],
+        [
+          "freetime",
+          -0.39215686274509803
+        ]
+      ],
+      "recipe": "reduce absences by 5.5 days; reduce going-out by 1.6 levels; reduce free time by 0.4 levels"
+    },
+    {
+      "cluster_id": 0,
+      "name": "Lifestyle-moderation",
+      "n_students": 13,
+      "dominant_features": [
+        [
+          "studytime",
+          2.076923076923077
+        ],
+        [
+          "goout",
+          -1.3846153846153846
+        ],
+        [
+          "absences",
+          -0.9230769230769231
+        ]
+      ],
+      "recipe": "raise study time by 2.1 levels; reduce going-out by 1.4 levels; reduce absences by 0.9 days"
+    }
+  ],
+  "silhouette_scores": {
+    "2": 0.19473742503808966,
+    "3": 0.1943760082187207,
+    "4": 0.17362911755754767,
+    "5": 0.21170026050968244
+  },
+  "dice_seed": 0
+}

@@ -81,6 +81,7 @@ class CounterfactualMetrics:
     validity: float          # fraction of generated CFs that actually flip
     mean_sparsity: float     # mean number of features changed per CF
     mean_proximity: float    # mean L1 distance per CF (normalized)
+    n_timeouts: int = 0      # students whose search hit the per-student cap
 
 
 @dataclass
@@ -104,7 +105,8 @@ def _build_classifier_dataframe(df_raw: pd.DataFrame,
 def _train_classifier(df: pd.DataFrame, target: str = 'at_risk'):
     from catboost import CatBoostClassifier
     cat_features = [c for c in df.columns
-                    if c != target and df[c].dtype == object]
+                    if c != target
+                    and not pd.api.types.is_numeric_dtype(df[c])]
     X = df.drop(columns=[target])
     y = df[target].values
     model = CatBoostClassifier(iterations=300, depth=6, learning_rate=0.05,
@@ -181,7 +183,8 @@ def generate_archetypes(df_target_raw: pd.DataFrame,
                         max_at_risk: int | None = None,
                         method: str = 'genetic',
                         enforce_monotonic: bool = True,
-                        kmeans_n_init: int = 20
+                        kmeans_n_init: int = 20,
+                        dice_seed: int | None = None
                         ) -> tuple[CounterfactualMetrics,
                                    list[Archetype],
                                    pd.DataFrame]:
@@ -242,11 +245,13 @@ def generate_archetypes(df_target_raw: pd.DataFrame,
 
     PER_STUDENT_TIMEOUT_S = 30  # cap per-student CF search to avoid hangs
 
+    seed_kw = {} if dice_seed is None else {'random_seed': dice_seed}
+
     def _gen_for(query, permitted):
         return explainer.generate_counterfactuals(
             query, total_CFs=cf_per_student, desired_class=0,
             features_to_vary=features_to_vary,
-            permitted_range=permitted, verbose=False)
+            permitted_range=permitted, verbose=False, **seed_kw)
 
     n_timeouts = 0
     for i in at_risk_idx:
@@ -383,6 +388,7 @@ def generate_archetypes(df_target_raw: pd.DataFrame,
         validity=float(n_valid / max(n_attempted, 1)),
         mean_sparsity=float(np.mean(sparsities)) if sparsities else 0.0,
         mean_proximity=float(np.mean(proximities)) if proximities else 0.0,
+        n_timeouts=n_timeouts,
     )
     return metrics, archetypes, deltas_df, silhouette_scores
 

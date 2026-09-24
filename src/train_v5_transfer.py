@@ -44,7 +44,21 @@ from transfer import (CoralAdaptedModel, TrAdaBoostR2,
 
 SEED = 42
 PASS_THRESHOLD = 10
-DEFAULT_RESULTS_ROOT = './results_v6'
+DEFAULT_RESULTS_ROOT = './results_v7'
+
+# Student-identity key used by Cortez & Silva to link the two course files
+# (data/student-merge.R); 382 pairs match on it.
+MERGE_KEYS = ['school', 'sex', 'age', 'address', 'famsize', 'Pstatus',
+              'Medu', 'Fedu', 'Mjob', 'Fjob', 'reason', 'nursery', 'internet']
+
+# How the transfer source is drawn relative to the target:
+#   full            whole source file every fold (the submitted protocol; it
+#                   lets test-fold students' other-course records into training)
+#   fold_exclusive  drop source rows whose identity key matches any target
+#                   student in the outer test fold (and in each inner
+#                   validation split of the gate)
+#   disjoint        keep only source students with no match in the target file
+SOURCE_POLICIES = ('full', 'fold_exclusive', 'disjoint')
 
 
 @dataclass(frozen=True)
@@ -84,6 +98,30 @@ def _load_subject(subject: str, data_dir: str = './data',
     return X, y, ds.feature_names
 
 
+def _merge_keys(subject: str, data_dir: str = './data') -> np.ndarray:
+    """One identity key per row, in the same row order as _load_subject."""
+    fname = {'portuguese': 'student-por.csv', 'math': 'student-mat.csv'}[subject]
+    df = pd.read_csv(os.path.join(data_dir, fname), sep=';')
+    return df[MERGE_KEYS].astype(str).agg('|'.join, axis=1).to_numpy()
+
+
+def _fold_source(policy: str, X_source: np.ndarray, y_source: np.ndarray,
+                 src_keys: np.ndarray | None, test_keys: np.ndarray | None,
+                 X_source_fe: np.ndarray, feature_names: list[str]):
+    """Source matrix, labels and keys for one outer fold.
+
+    Under fold_exclusive the source feature engineering is refit on the
+    reduced source, because its target encodings would otherwise carry the
+    excluded students' grades.
+    """
+    if policy != 'fold_exclusive':
+        return X_source_fe, y_source, src_keys
+    keep = ~np.isin(src_keys, test_keys)
+    fe = FeatureEngineer(scale_engineered=False)
+    X_fe = fe.fit_transform(X_source[keep], y_source[keep], feature_names)
+    return X_fe, y_source[keep], src_keys[keep]
+
+
 def _align_columns(X_a: np.ndarray, names_a: list[str],
                    X_b: np.ndarray, names_b: list[str]
                    ) -> tuple[np.ndarray, np.ndarray, list[str]]:
@@ -118,8 +156,12 @@ def _record_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
 
 def run_transfer_cv(X_source: np.ndarray, y_source: np.ndarray,
                     X_target: np.ndarray, y_target: np.ndarray,
-                    feature_names: list[str], cfg: RunConfig) -> dict:
-    """Repeated stratified CV on TARGET. Source is used whole as transfer pool.
+                    feature_names: list[str], cfg: RunConfig,
+                    source_policy: str = 'full',
+                    src_keys: np.ndarray | None = None,
+                    tgt_keys: np.ndarray | None = None) -> dict:
+    """Repeated stratified CV on TARGET. The transfer pool is the source,
+    reduced per fold according to source_policy (see SOURCE_POLICIES).
     Engineered features are fit per-fold from training data only.
     """
     bins = _stratify_bins(y_target)
@@ -128,21 +170,25 @@ def run_transfer_cv(X_source: np.ndarray, y_source: np.ndarray,
                                    random_state=SEED)
 
     methods = ['target_only', 'pooled', 'warm_start',
-               'tradaboost_r2', 'coral', 'gated']
+               'tradaboost_r2', 'tradaboost_r2_cb', 'coral', 'gated']
     fold_metrics = {m: {k: [] for k in ['rmse', 'mae', 'r2',
                                           'acc', 'f1', 'auc']}
                     for m in methods}
     gate_decisions = []
+    source_sizes = []
+    gate_keys = source_policy == 'fold_exclusive'
 
     fe_source = FeatureEngineer(scale_engineered=False)
     X_source_fe = fe_source.fit_transform(X_source, y_source, feature_names)
+    y_all_source = y_source
 
     catboost_params = dict(iterations=cfg.catboost_iterations, depth=6,
                            learning_rate=0.05, l2_leaf_reg=3.0,
                            random_seed=SEED, verbose=False,
                            allow_writing_files=False)
 
-    print(f"\n[transfer] {cfg.n_splits}x{cfg.n_repeats} CV on Math target", flush=True)
+    print(f"\n[transfer] {cfg.n_splits}x{cfg.n_repeats} CV on target "
+          f"(source policy: {source_policy})", flush=True)
 
     for fold_idx, (tr_idx, va_idx) in enumerate(rskf.split(X_target, bins)):
         rep = fold_idx // cfg.n_splits + 1
@@ -151,18 +197,24 @@ def run_transfer_cv(X_source: np.ndarray, y_source: np.ndarray,
         X_tr, X_va = X_target[tr_idx], X_target[va_idx]
         y_tr, y_va = y_target[tr_idx], y_target[va_idx]
 
+        X_source_fe_f, y_source, k_src = _fold_source(
+            source_policy, X_source, y_all_source,
+            src_keys, None if tgt_keys is None else tgt_keys[va_idx],
+            X_source_fe, feature_names)
+        source_sizes.append(int(len(y_source)))
+
         fe_target = FeatureEngineer(scale_engineered=False)
         X_tr_fe = fe_target.fit_transform(X_tr, y_tr, feature_names)
         X_va_fe = fe_target.transform(X_va, feature_names)
 
         # Reuse the source-fit FE columns to keep dimensionality consistent
-        if X_tr_fe.shape[1] != X_source_fe.shape[1]:
-            n = min(X_tr_fe.shape[1], X_source_fe.shape[1])
+        if X_tr_fe.shape[1] != X_source_fe_f.shape[1]:
+            n = min(X_tr_fe.shape[1], X_source_fe_f.shape[1])
             X_tr_fe = X_tr_fe[:, :n]
             X_va_fe = X_va_fe[:, :n]
-            X_src = X_source_fe[:, :n]
+            X_src = X_source_fe_f[:, :n]
         else:
-            X_src = X_source_fe
+            X_src = X_source_fe_f
 
         # 1) target-only baseline
         m_to = target_only_catboost(X_tr_fe, y_tr, params=catboost_params)
@@ -191,6 +243,14 @@ def run_transfer_cv(X_source: np.ndarray, y_source: np.ndarray,
         fold_metrics['tradaboost_r2'] = _append(fold_metrics['tradaboost_r2'],
                                                 _record_metrics(y_va, m_tr2.predict(X_va_fe)))
 
+        # 4b) TrAdaBoost.R2 with a CatBoost weak learner
+        m_tr2_cb = tradaboost_r2(X_src, y_source, X_tr_fe, y_tr,
+                                 n_estimators=cfg.tradaboost_estimators,
+                                 max_depth=6, base_learner='catboost')
+        fold_metrics['tradaboost_r2_cb'] = _append(
+            fold_metrics['tradaboost_r2_cb'],
+            _record_metrics(y_va, m_tr2_cb.predict(X_va_fe)))
+
         # 5) CORAL
         m_co = coral_align(X_src, y_source, X_tr_fe, y_tr,
                            base_params=catboost_params)
@@ -203,6 +263,8 @@ def run_transfer_cv(X_source: np.ndarray, y_source: np.ndarray,
                 Xs, ys, Xt, yt, source_params=catboost_params,
                 finetune_iterations=cfg.finetune_iterations, finetune_lr=0.03),
             X_src, y_source, X_tr_fe, y_tr, n_inner_splits=3,
+            source_keys=k_src if gate_keys else None,
+            target_keys=tgt_keys[tr_idx] if gate_keys else None,
         )
         fold_metrics['gated'] = _append(fold_metrics['gated'],
                                         _record_metrics(y_va, chosen.predict(X_va_fe)))
@@ -211,12 +273,15 @@ def run_transfer_cv(X_source: np.ndarray, y_source: np.ndarray,
             'chose_transfer': bool(decision.chose_transfer),
             'transfer_inner_rmse': decision.transfer_inner_rmse,
             'target_only_inner_rmse': decision.target_only_inner_rmse,
+            'source_n': int(len(y_source)),
         })
 
-        print(f"  rep={rep} fold={fold}  to={fold_metrics['target_only']['rmse'][-1]:.3f}"
+        print(f"  rep={rep} fold={fold}  src_n={len(y_source)}"
+              f"  to={fold_metrics['target_only']['rmse'][-1]:.3f}"
               f"  pool={fold_metrics['pooled']['rmse'][-1]:.3f}"
               f"  ws={fold_metrics['warm_start']['rmse'][-1]:.3f}"
               f"  tr2={fold_metrics['tradaboost_r2']['rmse'][-1]:.3f}"
+              f"  tr2cb={fold_metrics['tradaboost_r2_cb']['rmse'][-1]:.3f}"
               f"  cor={fold_metrics['coral']['rmse'][-1]:.3f}"
               f"  gate={fold_metrics['gated']['rmse'][-1]:.3f}", flush=True)
 
@@ -225,6 +290,9 @@ def run_transfer_cv(X_source: np.ndarray, y_source: np.ndarray,
 
     return {'summary': summary, 'gate_decisions': gate_decisions,
             'statistical_tests': stats,
+            'source_size': dict(min=int(min(source_sizes)),
+                                max=int(max(source_sizes)),
+                                mean=float(np.mean(source_sizes))),
             '_fold_rmse': {m: fold_metrics[m]['rmse'] for m in methods}}
 
 
@@ -310,20 +378,25 @@ def _statistical_tests(fold_rmse: dict[str, list[float]]) -> dict:
 
 def run_g1g2_cv(X_source: np.ndarray, y_source: np.ndarray,
                 X_target: np.ndarray, y_target: np.ndarray,
-                feature_names: list[str], cfg: RunConfig) -> dict:
+                feature_names: list[str], cfg: RunConfig,
+                source_policy: str = 'full',
+                src_keys: np.ndarray | None = None,
+                tgt_keys: np.ndarray | None = None) -> dict:
     bins = _stratify_bins(y_target)
     rskf = RepeatedStratifiedKFold(n_splits=cfg.n_splits,
                                    n_repeats=cfg.n_repeats,
                                    random_state=SEED)
 
-    methods = ['target_only', 'gated']
+    methods = ['target_only', 'warm_start', 'gated']
     fold_metrics = {m: {k: [] for k in ['rmse', 'mae', 'r2',
                                           'acc', 'f1', 'auc']}
                     for m in methods}
     gate_decisions = []
+    gate_keys = source_policy == 'fold_exclusive'
 
     fe_source = FeatureEngineer(scale_engineered=False)
     X_source_fe = fe_source.fit_transform(X_source, y_source, feature_names)
+    y_all_source = y_source
 
     catboost_params = dict(iterations=cfg.catboost_iterations, depth=6,
                            learning_rate=0.05, l2_leaf_reg=3.0,
@@ -340,27 +413,40 @@ def run_g1g2_cv(X_source: np.ndarray, y_source: np.ndarray,
         X_tr, X_va = X_target[tr_idx], X_target[va_idx]
         y_tr, y_va = y_target[tr_idx], y_target[va_idx]
 
+        X_source_fe_f, y_source, k_src = _fold_source(
+            source_policy, X_source, y_all_source,
+            src_keys, None if tgt_keys is None else tgt_keys[va_idx],
+            X_source_fe, feature_names)
+
         fe_target = FeatureEngineer(scale_engineered=False)
         X_tr_fe = fe_target.fit_transform(X_tr, y_tr, feature_names)
         X_va_fe = fe_target.transform(X_va, feature_names)
 
-        if X_tr_fe.shape[1] != X_source_fe.shape[1]:
-            n = min(X_tr_fe.shape[1], X_source_fe.shape[1])
+        if X_tr_fe.shape[1] != X_source_fe_f.shape[1]:
+            n = min(X_tr_fe.shape[1], X_source_fe_f.shape[1])
             X_tr_fe = X_tr_fe[:, :n]
             X_va_fe = X_va_fe[:, :n]
-            X_src = X_source_fe[:, :n]
+            X_src = X_source_fe_f[:, :n]
         else:
-            X_src = X_source_fe
+            X_src = X_source_fe_f
 
         m_to = target_only_catboost(X_tr_fe, y_tr, params=catboost_params)
         fold_metrics['target_only'] = _append(fold_metrics['target_only'],
                                               _record_metrics(y_va, m_to.predict(X_va_fe)))
+
+        m_ws = warm_start_catboost(
+            X_src, y_source, X_tr_fe, y_tr, source_params=catboost_params,
+            finetune_iterations=cfg.finetune_iterations, finetune_lr=0.03)
+        fold_metrics['warm_start'] = _append(fold_metrics['warm_start'],
+                                             _record_metrics(y_va, m_ws.predict(X_va_fe)))
 
         chosen, decision = negative_transfer_gate(
             lambda Xs, ys, Xt, yt: warm_start_catboost(
                 Xs, ys, Xt, yt, source_params=catboost_params,
                 finetune_iterations=cfg.finetune_iterations, finetune_lr=0.03),
             X_src, y_source, X_tr_fe, y_tr, n_inner_splits=3,
+            source_keys=k_src if gate_keys else None,
+            target_keys=tgt_keys[tr_idx] if gate_keys else None,
         )
         fold_metrics['gated'] = _append(fold_metrics['gated'],
                                         _record_metrics(y_va, chosen.predict(X_va_fe)))
@@ -372,10 +458,13 @@ def run_g1g2_cv(X_source: np.ndarray, y_source: np.ndarray,
         })
 
         print(f"  rep={rep} fold={fold}  to={fold_metrics['target_only']['rmse'][-1]:.3f}"
+              f"  ws={fold_metrics['warm_start']['rmse'][-1]:.3f}"
               f"  gate={fold_metrics['gated']['rmse'][-1]:.3f}", flush=True)
 
     summary = {m: _summarize(fold_metrics[m]) for m in methods}
+    stats = _statistical_tests({m: fold_metrics[m]['rmse'] for m in methods})
     return {'summary': summary, 'gate_decisions': gate_decisions,
+            'statistical_tests': stats,
             '_fold_rmse': {m: fold_metrics[m]['rmse'] for m in methods}}
 
 
@@ -402,13 +491,30 @@ def run_external_validation(out_dir: str) -> dict:
 
     proba = model.predict_proba(X_xapi)[:, 1]
     pred = (proba >= 0.5).astype(int)
+    y_arr = np.asarray(y_xapi)
     metrics = {
-        'auc': float(roc_auc_score(y_xapi, proba)),
-        'f1_macro': float(f1_score(y_xapi, pred, average='macro')),
-        'accuracy': float(accuracy_score(y_xapi, pred)),
-        'n_xapi': int(len(y_xapi)),
-        'risk_rate_xapi': float(y_xapi.mean()),
+        'auc': float(roc_auc_score(y_arr, proba)),
+        'f1_macro': float(f1_score(y_arr, pred, average='macro')),
+        'accuracy': float(accuracy_score(y_arr, pred)),
+        'n_xapi': int(len(y_arr)),
+        'risk_rate_xapi': float(y_arr.mean()),
     }
+
+    # Percentile bootstrap over xAPI students (the model is fixed).
+    n_boot = 2000
+    rng = np.random.default_rng(SEED)
+    boot = {'auc': [], 'f1_macro': [], 'accuracy': []}
+    for _ in range(n_boot):
+        idx = rng.integers(0, len(y_arr), len(y_arr))
+        if len(np.unique(y_arr[idx])) < 2:
+            continue
+        boot['auc'].append(roc_auc_score(y_arr[idx], proba[idx]))
+        boot['f1_macro'].append(f1_score(y_arr[idx], pred[idx], average='macro'))
+        boot['accuracy'].append(accuracy_score(y_arr[idx], pred[idx]))
+    for k, vals in boot.items():
+        metrics[f'{k}_ci95_lo'] = float(np.percentile(vals, 2.5))
+        metrics[f'{k}_ci95_hi'] = float(np.percentile(vals, 97.5))
+    metrics['n_bootstrap'] = n_boot
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, 'external_validation.json'), 'w') as fh:
         json.dump(metrics, fh, indent=2)
@@ -487,6 +593,11 @@ def main():
                         help='Swap source/target so that Mathematics is the source '
                              'and Portuguese is the target (Math->Por). Writes '
                              'results_v6/transfer/transfer_cv_reverse.json.')
+    parser.add_argument('--source-policy', choices=SOURCE_POLICIES,
+                        default='fold_exclusive',
+                        help='How the transfer source is drawn relative to the '
+                             'target (see SOURCE_POLICIES). Outputs go to '
+                             '<results-root>/transfer/<policy>/.')
     args = parser.parse_args()
 
     cfg = RunConfig.smoke() if args.smoke else RunConfig.full()
@@ -496,7 +607,7 @@ def main():
 
     print(f"\n[v5_transfer] config: {cfg}")
 
-    transfer_dir = os.path.join(args.results_root, 'transfer')
+    transfer_dir = os.path.join(args.results_root, 'transfer', args.source_policy)
     xapi_dir = os.path.join(args.results_root, 'xapi')
     cf_dir = os.path.join(args.results_root, 'counterfactual')
     for d in (transfer_dir, xapi_dir, cf_dir):
@@ -512,24 +623,37 @@ def main():
         X_por, y_por, names_por = _load_subject('portuguese')
         X_mat, y_mat, names_mat = _load_subject('math')
         X_por_a, X_mat_a, names = _align_columns(X_por, names_por, X_mat, names_mat)
+        k_por, k_mat = _merge_keys('portuguese'), _merge_keys('math')
+        assert len(k_por) == len(y_por) and len(k_mat) == len(y_mat)
 
         if args.reverse:
-            X_src_a, y_src = X_mat_a, y_mat
-            X_tgt_a, y_tgt = X_por_a, y_por
+            X_src_a, y_src, k_src = X_mat_a, y_mat, k_mat
+            X_tgt_a, y_tgt, k_tgt = X_por_a, y_por, k_por
             out_name = 'transfer_cv_reverse.json'
         else:
-            X_src_a, y_src = X_por_a, y_por
-            X_tgt_a, y_tgt = X_mat_a, y_mat
+            X_src_a, y_src, k_src = X_por_a, y_por, k_por
+            X_tgt_a, y_tgt, k_tgt = X_mat_a, y_mat, k_mat
             out_name = 'transfer_cv.json'
+        if args.source_policy == 'disjoint':
+            keep = ~np.isin(k_src, k_tgt)
+            X_src_a, y_src, k_src = X_src_a[keep], y_src[keep], k_src[keep]
         print(f"  source: {X_src_a.shape}  target: {X_tgt_a.shape}  "
-              f"common features: {len(names)}", flush=True)
+              f"common features: {len(names)}  "
+              f"target rows with a source match: {int(np.isin(k_tgt, k_src).sum())}",
+              flush=True)
 
-        result = run_transfer_cv(X_src_a, y_src, X_tgt_a, y_tgt, names, cfg)
+        result = run_transfer_cv(X_src_a, y_src, X_tgt_a, y_tgt, names, cfg,
+                                 source_policy=args.source_policy,
+                                 src_keys=k_src, tgt_keys=k_tgt)
         with open(os.path.join(transfer_dir, out_name), 'w') as fh:
             json.dump({'config': dict(n_splits=cfg.n_splits,
                                        n_repeats=cfg.n_repeats,
                                        name=cfg.name,
-                                       reverse=bool(args.reverse)),
+                                       reverse=bool(args.reverse),
+                                       source_policy=args.source_policy,
+                                       n_features=len(names),
+                                       source_rows=int(len(y_src)),
+                                       target_rows=int(len(y_tgt))),
                        **result},
                       fh, indent=2)
 
@@ -575,21 +699,30 @@ def main():
             'math', include_prior_grades=True)
         X_por_ga, X_mat_ga, names_g = _align_columns(
             X_por_g, names_por_g, X_mat_g, names_mat_g)
+        k_por, k_mat = _merge_keys('portuguese'), _merge_keys('math')
+        if args.source_policy == 'disjoint':
+            keep = ~np.isin(k_por, k_mat)
+            X_por_ga, y_por_g, k_por = X_por_ga[keep], y_por_g[keep], k_por[keep]
         print(f"  source: {X_por_ga.shape}  target: {X_mat_ga.shape}  "
               f"common features: {len(names_g)}", flush=True)
 
         result_g = run_g1g2_cv(X_por_ga, y_por_g, X_mat_ga, y_mat_g,
-                                names_g, cfg)
+                                names_g, cfg, source_policy=args.source_policy,
+                                src_keys=k_por, tgt_keys=k_mat)
         out_g = os.path.join(transfer_dir, 'transfer_cv_with_g1g2.json')
         with open(out_g, 'w') as fh:
             json.dump({'config': dict(n_splits=cfg.n_splits,
                                        n_repeats=cfg.n_repeats,
                                        name=cfg.name,
-                                       include_prior_grades=True),
+                                       include_prior_grades=True,
+                                       source_policy=args.source_policy),
                        **result_g}, fh, indent=2)
         s_g = result_g['summary']
+        n_g = sum(d['chose_transfer'] for d in result_g['gate_decisions'])
         print(f"\n[g1g2] target_only RMSE={s_g['target_only']['rmse']['mean']:.3f}"
-              f"  gated RMSE={s_g['gated']['rmse']['mean']:.3f}")
+              f"  warm_start RMSE={s_g['warm_start']['rmse']['mean']:.3f}"
+              f"  gated RMSE={s_g['gated']['rmse']['mean']:.3f}"
+              f"  gate chose transfer {n_g}/{len(result_g['gate_decisions'])}")
 
     print(f"\n[done] total elapsed: {time.time() - t0:.1f}s "
           f"-- artifacts in {args.results_root}/")

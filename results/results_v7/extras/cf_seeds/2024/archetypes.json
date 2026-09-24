@@ -1,0 +1,60 @@
+{
+  "metrics": {
+    "n_at_risk": 80,
+    "n_with_cf": 64,
+    "coverage": 0.8,
+    "validity": 0.8,
+    "mean_sparsity": 2.109375,
+    "mean_proximity": 1.3445833333333335,
+    "n_timeouts": 0
+  },
+  "archetypes": [
+    {
+      "cluster_id": 1,
+      "name": "Attendance-focused",
+      "n_students": 58,
+      "dominant_features": [
+        [
+          "absences",
+          -4.810344827586207
+        ],
+        [
+          "goout",
+          -1.5689655172413792
+        ],
+        [
+          "studytime",
+          0.4827586206896552
+        ]
+      ],
+      "recipe": "reduce absences by 4.8 days; reduce going-out by 1.6 levels; raise study time by 0.5 levels"
+    },
+    {
+      "cluster_id": 0,
+      "name": "Study-intensity",
+      "n_students": 6,
+      "dominant_features": [
+        [
+          "studytime",
+          1.5
+        ],
+        [
+          "freetime",
+          -1.5
+        ],
+        [
+          "paid_changed",
+          1.0
+        ]
+      ],
+      "recipe": "raise study time by 1.5 levels; reduce free time by 1.5 levels; toggle paid"
+    }
+  ],
+  "silhouette_scores": {
+    "2": 0.2972756221463623,
+    "3": 0.250152284660518,
+    "4": 0.30933280428768384,
+    "5": 0.2408071017286148
+  },
+  "dice_seed": 2024
+}

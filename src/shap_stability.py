@@ -60,37 +60,43 @@ def compute_domain_shap(X: np.ndarray, y: np.ndarray, domain: str) -> DomainShap
                       rank_vector=rank_vector.astype(int))
 
 
-def compute_stability_matrix(domains: list[DomainShap],
-                             n_perm: int = 5000,
-                             rng_seed: int = SEED
-                             ) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """Return (rho_matrix, p_value_matrix, names).
+def _exact_spearman_null(n_feat: int) -> np.ndarray:
+    """Spearman rho of the identity ranking against every one of the n!
+    orderings (untied ranks, so rho = 1 - 6*sum(d^2)/(n(n^2-1)))."""
+    from itertools import permutations
+    base = np.arange(n_feat)
+    perms = np.array(list(permutations(base)))
+    d2 = ((perms - base) ** 2).sum(axis=1)
+    return 1.0 - 6.0 * d2 / (n_feat * (n_feat ** 2 - 1))
 
-    p-values are two-sided permutation tests: shuffle one rank vector
-    n_perm times and compute the fraction of |rho_perm| >= |rho_obs|.
+
+def compute_stability_matrix(domains: list[DomainShap]
+                             ) -> tuple[np.ndarray, np.ndarray, list[str],
+                                        np.ndarray]:
+    """Return (rho_matrix, two_sided_p_matrix, names, one_sided_p_matrix).
+
+    p-values come from the exact permutation distribution: all n! orderings
+    of one rank vector are enumerated (40,320 at n = 8), so there is no
+    Monte-Carlo error. The smallest attainable two-sided p is 2/n! and the
+    smallest one-sided p is 1/n!.
     """
     n = len(domains)
     mat = np.eye(n)
     pmat = np.zeros((n, n))
+    pmat_one = np.zeros((n, n))
     names = [d.domain for d in domains]
-    rng = np.random.default_rng(rng_seed)
+    null = _exact_spearman_null(len(domains[0].rank_vector))
     for i in range(n):
         for j in range(i + 1, n):
             a = domains[i].rank_vector
             b = domains[j].rank_vector
             rho, _ = spearmanr(a, b)
             mat[i, j] = mat[j, i] = float(rho)
-
-            obs = abs(float(rho))
-            count = 0
-            for _ in range(n_perm):
-                b_shuf = rng.permutation(b)
-                r_shuf, _ = spearmanr(a, b_shuf)
-                if abs(float(r_shuf)) >= obs - 1e-12:
-                    count += 1
-            p = (count + 1) / (n_perm + 1)
-            pmat[i, j] = pmat[j, i] = float(p)
-    return mat, pmat, names
+            p_two = float(np.mean(np.abs(null) >= abs(float(rho)) - 1e-12))
+            p_one = float(np.mean(null >= float(rho) - 1e-12))
+            pmat[i, j] = pmat[j, i] = p_two
+            pmat_one[i, j] = pmat_one[j, i] = p_one
+    return mat, pmat, names, pmat_one
 
 
 def per_feature_stability(domains: list[DomainShap]) -> dict[str, float]:
@@ -119,7 +125,7 @@ def run_full_stability_analysis(out_dir: str | None = None) -> dict:
         compute_domain_shap(X_mat, y_mat, 'Math'),
         compute_domain_shap(X_xapi, y_xapi, 'xAPI'),
     ]
-    mat, pmat, names = compute_stability_matrix(domains)
+    mat, pmat, names, pmat_one = compute_stability_matrix(domains)
     stability_per_feat = per_feature_stability(domains)
 
     result = {
@@ -127,6 +133,8 @@ def run_full_stability_analysis(out_dir: str | None = None) -> dict:
         'feature_importance': {d.domain: d.feature_importance for d in domains},
         'spearman_matrix': mat.tolist(),
         'spearman_p_matrix': pmat.tolist(),
+        'spearman_p_one_sided_matrix': pmat_one.tolist(),
+        'p_test': 'exact permutation (all n! orderings)',
         'matrix_labels': names,
         'per_feature_rank_std': stability_per_feat,
     }

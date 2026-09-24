@@ -1,0 +1,28 @@
+{
+  "n_portuguese_only": 275,
+  "at_risk_rate_portuguese_only": 0.2545454545454545,
+  "rho_por_only_vs_math": 0.6428571428571429,
+  "p_two_sided_exact": 0.09618055555555556,
+  "feature_importance": {
+    "Portuguese-only": {
+      "is_male": 0.2804792927340577,
+      "high_absence": 0.11193291835326431,
+      "family_engagement": 0.19529276731923745,
+      "engagement_score": 0.40505680150603884,
+      "higher_ed_intent": 0.2875627366058461,
+      "prior_failure_risk": 0.8589039611711666,
+      "parental_education": 0.3696634347734515,
+      "romantic_or_distraction": 0.19431233820381555
+    },
+    "Math": {
+      "is_male": 0.32054871712160576,
+      "high_absence": 0.19475301003184012,
+      "family_engagement": 0.28070025044752805,
+      "engagement_score": 0.31860021815282924,
+      "higher_ed_intent": 0.09674442963603203,
+      "prior_failure_risk": 0.6622906536789712,
+      "parental_education": 0.33174171019318605,
+      "romantic_or_distraction": 0.17306410711626763
+    }
+  }
+}

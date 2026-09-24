@@ -76,14 +76,19 @@ class TrAdaBoostR2:
       source samples -> decrease weight if wrong (suppress mismatched source)
 
     Final prediction is the weighted median of the second-half learners
-    (per Pardoe & Stone). Weak learner: shallow DecisionTreeRegressor.
+    (per Pardoe & Stone). Weak learner: shallow DecisionTreeRegressor by
+    default; base_learner='catboost' swaps in a small CatBoost regressor so
+    the strategy shares the base-learner family of the other two.
     """
 
     def __init__(self, n_estimators: int = 30, max_depth: int = 6,
-                 random_state: int = SEED):
+                 random_state: int = SEED, base_learner: str = 'tree',
+                 catboost_iterations: int = 100):
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.random_state = random_state
+        self.base_learner = base_learner
+        self.catboost_iterations = catboost_iterations
         self.estimators_: list = []
         self.estimator_weights_: list[float] = []
         self.n_target_: int = 0
@@ -104,8 +109,15 @@ class TrAdaBoostR2:
         rng = np.random.default_rng(self.random_state)
 
         for t in range(self.n_estimators):
-            est = DecisionTreeRegressor(max_depth=self.max_depth,
-                                        random_state=self.random_state + t)
+            if self.base_learner == 'catboost':
+                est = CatBoostRegressor(iterations=self.catboost_iterations,
+                                        depth=self.max_depth, learning_rate=0.1,
+                                        l2_leaf_reg=3.0,
+                                        random_seed=self.random_state + t,
+                                        verbose=False, allow_writing_files=False)
+            else:
+                est = DecisionTreeRegressor(max_depth=self.max_depth,
+                                            random_state=self.random_state + t)
             sample_idx = rng.choice(n, size=n, replace=True, p=weights)
             est.fit(X[sample_idx], y[sample_idx])
             preds = est.predict(X)
@@ -156,8 +168,10 @@ class TrAdaBoostR2:
 
 def tradaboost_r2(X_source: np.ndarray, y_source: np.ndarray,
                   X_target: np.ndarray, y_target: np.ndarray,
-                  n_estimators: int = 30, max_depth: int = 6) -> TrAdaBoostR2:
-    model = TrAdaBoostR2(n_estimators=n_estimators, max_depth=max_depth)
+                  n_estimators: int = 30, max_depth: int = 6,
+                  base_learner: str = 'tree') -> TrAdaBoostR2:
+    model = TrAdaBoostR2(n_estimators=n_estimators, max_depth=max_depth,
+                         base_learner=base_learner)
     model.fit(X_source, y_source, X_target, y_target)
     return model
 
@@ -259,17 +273,30 @@ def _inner_rmse(fit_fn, X_t: np.ndarray, y_t: np.ndarray,
 def negative_transfer_gate(transfer_fit_fn,
                            X_source: np.ndarray, y_source: np.ndarray,
                            X_target: np.ndarray, y_target: np.ndarray,
-                           n_inner_splits: int = 3) -> tuple[object, GateDecision]:
+                           n_inner_splits: int = 3,
+                           source_keys: np.ndarray | None = None,
+                           target_keys: np.ndarray | None = None
+                           ) -> tuple[object, GateDecision]:
     """Choose transfer if it beats target-only on inner CV; otherwise fall back.
 
     transfer_fit_fn must accept (X_source, y_source, X_target, y_target)
     and return a fitted model. Returns (chosen_model, decision).
+
+    When source_keys/target_keys are given, source rows belonging to the
+    students in each inner validation split are dropped for that split, so
+    the inner comparison is free of the same student-identity leak that the
+    outer loop removes.
     """
     kf = KFold(n_splits=n_inner_splits, shuffle=True, random_state=SEED)
     transfer_scores = []
     target_only_scores = []
     for tr, va in kf.split(X_target):
-        m_t = transfer_fit_fn(X_source, y_source, X_target[tr], y_target[tr])
+        if source_keys is not None and target_keys is not None:
+            keep = ~np.isin(source_keys, target_keys[va])
+            Xs_in, ys_in = X_source[keep], y_source[keep]
+        else:
+            Xs_in, ys_in = X_source, y_source
+        m_t = transfer_fit_fn(Xs_in, ys_in, X_target[tr], y_target[tr])
         transfer_scores.append(np.sqrt(mean_squared_error(
             y_target[va], m_t.predict(X_target[va]))))
 

@@ -1,0 +1,375 @@
+{
+  "seeds": [
+    0,
+    42,
+    123,
+    2024,
+    2025
+  ],
+  "runs": {
+    "0": {
+      "seconds": 31.4,
+      "n_at_risk": 80,
+      "n_with_cf": 64,
+      "coverage": 0.8,
+      "n_timeouts": 0,
+      "mean_sparsity": 2.234375,
+      "mean_proximity": 1.4859375,
+      "archetypes": [
+        {
+          "name": "Attendance-focused",
+          "n_students": 51,
+          "dominant_features": [
+            [
+              "absences",
+              -5.549019607843137
+            ],
+            [
+              "goout",
+              -1.6274509803921569
+            ],
+            [
+              "freetime",
+              -0.39215686274509803
+            ]
+          ]
+        },
+        {
+          "name": "Lifestyle-moderation",
+          "n_students": 13,
+          "dominant_features": [
+            [
+              "studytime",
+              2.076923076923077
+            ],
+            [
+              "goout",
+              -1.3846153846153846
+            ],
+            [
+              "absences",
+              -0.9230769230769231
+            ]
+          ]
+        }
+      ],
+      "silhouette": {
+        "2": 0.19473742503808966,
+        "3": 0.1943760082187207,
+        "4": 0.17362911755754767,
+        "5": 0.21170026050968244
+      },
+      "best_k": 5
+    },
+    "42": {
+      "seconds": 29.8,
+      "n_at_risk": 80,
+      "n_with_cf": 62,
+      "coverage": 0.775,
+      "n_timeouts": 0,
+      "mean_sparsity": 2.2419354838709675,
+      "mean_proximity": 1.459784946236559,
+      "archetypes": [
+        {
+          "name": "Attendance-focused",
+          "n_students": 43,
+          "dominant_features": [
+            [
+              "absences",
+              -6.511627906976744
+            ],
+            [
+              "goout",
+              -1.744186046511628
+            ],
+            [
+              "Walc",
+              -0.6511627906976745
+            ]
+          ]
+        },
+        {
+          "name": "Lifestyle-moderation",
+          "n_students": 19,
+          "dominant_features": [
+            [
+              "goout",
+              -1.1578947368421053
+            ],
+            [
+              "freetime",
+              -0.9473684210526315
+            ],
+            [
+              "activities_changed",
+              0.8421052631578947
+            ]
+          ]
+        }
+      ],
+      "silhouette": {
+        "2": 0.13654598762181075,
+        "3": 0.16082954307195985,
+        "4": 0.20251248083148674,
+        "5": 0.24187154966135546
+      },
+      "best_k": 5
+    },
+    "123": {
+      "seconds": 29.7,
+      "n_at_risk": 80,
+      "n_with_cf": 62,
+      "coverage": 0.775,
+      "n_timeouts": 0,
+      "mean_sparsity": 2.129032258064516,
+      "mean_proximity": 1.3887096774193548,
+      "archetypes": [
+        {
+          "name": "Attendance-focused",
+          "n_students": 46,
+          "dominant_features": [
+            [
+              "absences",
+              -5.065217391304348
+            ],
+            [
+              "goout",
+              -1.8478260869565217
+            ],
+            [
+              "studytime",
+              0.4782608695652174
+            ]
+          ]
+        },
+        {
+          "name": "Lifestyle-moderation",
+          "n_students": 16,
+          "dominant_features": [
+            [
+              "freetime",
+              -1.25
+            ],
+            [
+              "goout",
+              -0.9375
+            ],
+            [
+              "absences",
+              -0.75
+            ]
+          ]
+        }
+      ],
+      "silhouette": {
+        "2": 0.14004820333050974,
+        "3": 0.16251689800113167,
+        "4": 0.22385085835574978,
+        "5": 0.22924945697880325
+      },
+      "best_k": 5
+    },
+    "2024": {
+      "seconds": 29.4,
+      "n_at_risk": 80,
+      "n_with_cf": 64,
+      "coverage": 0.8,
+      "n_timeouts": 0,
+      "mean_sparsity": 2.109375,
+      "mean_proximity": 1.3445833333333335,
+      "archetypes": [
+        {
+          "name": "Attendance-focused",
+          "n_students": 58,
+          "dominant_features": [
+            [
+              "absences",
+              -4.810344827586207
+            ],
+            [
+              "goout",
+              -1.5689655172413792
+            ],
+            [
+              "studytime",
+              0.4827586206896552
+            ]
+          ]
+        },
+        {
+          "name": "Study-intensity",
+          "n_students": 6,
+          "dominant_features": [
+            [
+              "studytime",
+              1.5
+            ],
+            [
+              "freetime",
+              -1.5
+            ],
+            [
+              "paid_changed",
+              1.0
+            ]
+          ]
+        }
+      ],
+      "silhouette": {
+        "2": 0.2972756221463623,
+        "3": 0.250152284660518,
+        "4": 0.30933280428768384,
+        "5": 0.2408071017286148
+      },
+      "best_k": 4
+    },
+    "2025": {
+      "seconds": 30.6,
+      "n_at_risk": 80,
+      "n_with_cf": 62,
+      "coverage": 0.775,
+      "n_timeouts": 0,
+      "mean_sparsity": 2.0161290322580645,
+      "mean_proximity": 1.3104301075268818,
+      "archetypes": [
+        {
+          "name": "Attendance-focused",
+          "n_students": 58,
+          "dominant_features": [
+            [
+              "absences",
+              -4.310344827586207
+            ],
+            [
+              "goout",
+              -1.603448275862069
+            ],
+            [
+              "studytime",
+              0.603448275862069
+            ]
+          ]
+        },
+        {
+          "name": "Lifestyle-moderation",
+          "n_students": 4,
+          "dominant_features": [
+            [
+              "goout",
+              -2.0
+            ],
+            [
+              "absences",
+              -1.5
+            ],
+            [
+              "Walc",
+              -1.0
+            ]
+          ]
+        }
+      ],
+      "silhouette": {
+        "2": 0.33780998556101266,
+        "3": 0.17794074606887153,
+        "4": 0.2648192219890075,
+        "5": 0.21026683819731504
+      },
+      "best_k": 2
+    }
+  },
+  "pairwise": [
+    {
+      "seeds": [
+        0,
+        42
+      ],
+      "n_common": 62,
+      "name_agreement": 0.5645161290322581,
+      "adjusted_rand": -0.05170123597310886
+    },
+    {
+      "seeds": [
+        0,
+        123
+      ],
+      "n_common": 62,
+      "name_agreement": 0.6451612903225806,
+      "adjusted_rand": -0.01272170479607784
+    },
+    {
+      "seeds": [
+        0,
+        2024
+      ],
+      "n_common": 64,
+      "name_agreement": 0.71875,
+      "adjusted_rand": -0.02159915977898534
+    },
+    {
+      "seeds": [
+        0,
+        2025
+      ],
+      "n_common": 62,
+      "name_agreement": 0.7741935483870968,
+      "adjusted_rand": 0.018657638511342854
+    },
+    {
+      "seeds": [
+        42,
+        123
+      ],
+      "n_common": 62,
+      "name_agreement": 0.7903225806451613,
+      "adjusted_rand": 0.3053643419435684
+    },
+    {
+      "seeds": [
+        42,
+        2024
+      ],
+      "n_common": 62,
+      "name_agreement": 0.6612903225806451,
+      "adjusted_rand": 0.037158841833736245
+    },
+    {
+      "seeds": [
+        42,
+        2025
+      ],
+      "n_common": 62,
+      "name_agreement": 0.7258064516129032,
+      "adjusted_rand": 0.09844126560931239
+    },
+    {
+      "seeds": [
+        123,
+        2024
+      ],
+      "n_common": 62,
+      "name_agreement": 0.7096774193548387,
+      "adjusted_rand": 0.06528478479285203
+    },
+    {
+      "seeds": [
+        123,
+        2025
+      ],
+      "n_common": 62,
+      "name_agreement": 0.7419354838709677,
+      "adjusted_rand": 0.06528478479285203
+    },
+    {
+      "seeds": [
+        2024,
+        2025
+      ],
+      "n_common": 62,
+      "name_agreement": 0.8709677419354839,
+      "adjusted_rand": -0.06123339776766228
+    }
+  ],
+  "name_agreement_min": 0.5645161290322581,
+  "name_agreement_mean": 0.7202620967741936
+}

@@ -1,0 +1,11 @@
+{
+  "n_por": 649,
+  "n_mat": 395,
+  "merge_pairs_cortez": 382,
+  "mat_rows_with_por_match": 370,
+  "por_rows_with_mat_match": 374,
+  "por_only_rows": 275,
+  "mat_only_rows": 25,
+  "share_mat_with_match": 0.9367088607594937,
+  "g3_corr_matched": 0.4803493619410263
+}
